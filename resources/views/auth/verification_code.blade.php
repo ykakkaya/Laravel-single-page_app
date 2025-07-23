@@ -38,18 +38,21 @@
                                 </div>
 
                                 <div class="pt-0">
-                                    <form action="{{ route('verification.code') }}" class="my-4" method="post">
+                                    <form action="{{ route('login') }}" class="my-4" method="post">
                                         @csrf
-                                        <div class="form-group mb-3">
-                                            <label for="emailaddress" class="form-label">Email address</label>
-                                            <input class="form-control" type="email" name="email" id="emailaddress"
-                                                required="" placeholder="Enter your email">
-                                        </div>
+                                        <input class="form-control" type="hidden" name="email"
+                                            value="{{ $email }}">
 
+
+                                        <div class="form-group mb-3">
+                                            <label for="password" class="form-label">Doğrulama Kodu</label>
+                                            <input class="form-control" type="number" name="code" required=""
+                                                id="password" placeholder="Doğrulama Kodunu Giriniz">
+                                        </div>
                                         <div class="form-group mb-0 row">
                                             <div class="col-12">
                                                 <div class="d-grid">
-                                                    <button class="btn btn-primary" type="submit"> Kod Gönder </button>
+                                                    <button class="btn btn-primary" type="submit"> Log In </button>
                                                 </div>
                                             </div>
                                         </div>

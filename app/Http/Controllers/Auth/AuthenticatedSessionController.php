@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use Illuminate\View\View;
+use Illuminate\Http\Request;
+use App\Mail\VerificationCodeMail;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\RedirectResponse;
+use App\Http\Requests\Auth\LoginRequest;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -18,18 +21,51 @@ class AuthenticatedSessionController extends Controller
     {
         return view('auth.login');
     }
+    
+    // public function verificationCodeView(){
+    //     return view('auth.verification_code');
+    // }
+
+    public function verificationCode(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return redirect()->back()->with('error', 'Bu email adresiyle kayıtlı bir kullanıcı bulunamadı.');
+        }
+
+        $code =random_int(100000,999999);
+        session()->put('code',$code);
+        Mail::to($user->email)->send(new VerificationCodeMail($code));
+        $email=$user->email;
+        
+        
+        return view('auth.verification_code',compact('email'));
+    }
 
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
-        $request->authenticate();
+        $request->validate([
+            'code' => 'required|numeric|min:6',
+        ]);
+        
+        if($request->code==session()->get('code')){
+            $user=User::where('email', $request->email)->first();
+            session()->forget('code');
+           Auth::login($user);
+           
+            return redirect()->intended(route('admin.index', absolute: true));
+        }
 
-        $request->session()->regenerate();
-
-        return redirect()->intended(route('admin.index', absolute: false));
+        return redirect()->back()->with('error', 'Doğrulama kodu yanlış.');
     }
+   
 
     /**
      * Destroy an authenticated session.
